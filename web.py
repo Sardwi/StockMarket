@@ -8,6 +8,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 import plotly.io as pio
+import sqlite3
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, "stockdatasql.db")
+
+conn = sqlite3.connect(db_path)
+c= conn.cursor()
 
 st.write("""
 #Stock Market Web App
@@ -30,7 +36,9 @@ def get_in():
 
 # funcion to get name
 def get_company_data(symbol,start,end):
-	df = pd.read_csv('stocks/{}.csv'.format(symbol))
+	query = "SELECT * from '" + symbol + "'"
+	df = pd.read_sql_query(query, conn)
+	#df = pd.read_csv('stocks/{}.csv'.format(symbol))
 	start = pd.to_datetime(start)
 	end = pd.to_datetime(end)
 

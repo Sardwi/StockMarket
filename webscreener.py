@@ -16,7 +16,7 @@ db_path = os.path.join(BASE_DIR, "stockdatasql.db")
 conn = sqlite3.connect(db_path)
 c= conn.cursor()
 
-st.write("""#**Stock Market Screener**""")
+st.write("""**Stock Market Screener**""")
 
 image = Image.open("image.jpg")
 
@@ -28,13 +28,13 @@ with open("nifty50tickers.pickle","rb") as f:
 			tickers = pickle.load(f)
 
 def get_inputs():
-	macd_w = st.sidebar.text_input("MACD Weight","9")
-	macd_l = st.sidebar.text_input("MACD Long","26")
-	macd_s = st.sidebar.text_input("MACD Short","12")
-	ma1p = st.sidebar.text_input("MA Short Period","30")
-	ma2p = st.sidebar.text_input("MA Long Period","60")
-	rsip = st.sidebar.text_input("RSI Period","14")
-	bolp = st.sidebar.text_input("Bolinger Period","20")
+	macd_w = st.sidebar.slider("MACD Weight",value=9,min_value=1,max_value=25)
+	macd_l = st.sidebar.slider("MACD Long",value=26,min_value=1,max_value=50)
+	macd_s = st.sidebar.slider("MACD Short",value=12,min_value=1,max_value=50)
+	ma1p = st.sidebar.slider("MA Short Period",value=30,min_value=1,max_value=100)
+	ma2p = st.sidebar.slider("MA Long Period",value=60,min_value=1,max_value=200)
+	rsip = st.sidebar.slider("RSI Period",value=14,min_value=1,max_value=50)
+	bolp = st.sidebar.slider("Bolinger Period",value=20,min_value=1,max_value=50)
 	return(macd_w,macd_l,macd_s,ma1p,ma2p,rsip,bolp)
 
 macd_w,macd_l,macd_s,ma1p,ma2p,rsip,bolp=get_inputs()
@@ -94,7 +94,7 @@ for ticker in tickers:
 	if df['Adj Close'].iloc[-1]>df['bol_mid'].iloc[-1]:
 		c4=1
 
-	if c1+c2+c3+c4>3:
+	if c1+c2+c3+c4==4:
 		screened_stocks = screened_stocks.append({'Stock':ticker, 'Adj Close': Adj_Close ,'Volume': volume,'MACD':macd,'RSI':rsi_val,'bol_mid':bol,'sma':sma},ignore_index=True)
-
+st.write("**Filtered Stocks:**")
 st.write(screened_stocks)

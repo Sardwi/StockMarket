@@ -74,7 +74,7 @@ for ticker in tickers:
 
 	Adj_Close = df['Adj Close'].iloc[-1]
 	volume = df['Volume'].iloc[-1]
-	macd = df['MACD'].iloc[-1]
+	macd = df['MACDH'].iloc[-1]
 	rsi_val = df['rsi'].iloc[-1]
 	bol = df['bol_mid'].iloc[-1]
 	sma = df['ma1'].iloc[-1]
@@ -85,7 +85,7 @@ for ticker in tickers:
 	c4=0
 	c5=0
 
-	if df['MACD'].iloc[-1]>0:
+	if df['MACDH'].iloc[-1]>0:
 		c1=1
 	if df['ma1'].iloc[-1]>df['ma2'].iloc[-1]:
 		c2=1

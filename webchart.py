@@ -34,6 +34,11 @@ def get_in():
 	symbol = st.sidebar.text_input("Stock Symbol","WIPRO.NS")
 	return(start,end,symbol)
 
+def select_indicators():
+    indicator_list=['MACD','RSI','Bol Bands']
+    i=st.sidebar.multiselect("Indicators",indicator_list)
+    return(i)
+
 # funcion to get name
 def get_company_data(symbol,start,end):
 	query = "SELECT * from '" + symbol + "'"
@@ -60,27 +65,23 @@ def get_company_data(symbol,start,end):
 
 start,end,symbol=get_in()
 df=get_company_data(symbol,start,end)
+selected_indicators=select_indicators()
+rsi_flag=0
+macd_flag=0
+bol_flag=0
 
-# st.header("Volume")
-# st.line_chart(df['Close'])
+if 'RSI' in selected_indicators:
+    rsi_flag = 1
+if 'MACD' in selected_indicators:
+    macd_flag = 1
+if 'Bol Bands' in selected_indicators:
+    bol_flag = 1
 
-# st.header("Volume")
-# st.line_chart(df['Volume'])
-
-# st.header("Stats")
-# st.write(df.describe())
 macd_weight='9'
-#input('MACD SIGNAL LENGHT: ')
 macd_long ='26' 
-#input('MACD Long LENGHT: ')
 macd_short ='12'
-#input('MACD short LENGHT: ')
-
-#Moving Averages
 ma_period1 = '30'
-#input('Enter MA period: ')
 ma_period2 ='60'
-#input('Enter MA period2: ')
 
 df['MACDshortEMA']=df['Adj Close'].ewm(span=int(macd_short),adjust=False).mean()
 df['MACDlongEMA']=df['Adj Close'].ewm(span=int(macd_long),adjust=False).mean()
@@ -116,12 +117,19 @@ for i in range(len(df)):
         colour.append('green')
 
 df = df.iloc[60:]
+num_subplot = 2 + rsi_flag + macd_flag
 
-def chart_strategy(df):
+def chart_strategy(df,num_subplot):
     fig = go.Figure()
-    fig = make_subplots(rows=4, cols=1, 
+    if num_subplot==4:
+        rh=[0.4, 0.2,0.2,0.2]
+    elif num_subplot==3:
+        rh=[0.6, 0.2,0.2]
+    else:
+        rh =[0.7,0.3]
+    fig = make_subplots(rows=num_subplot, cols=1, 
                     shared_xaxes=True, 
-                    vertical_spacing=0.1,row_heights=[0.4, 0.2,0.2,0.2])
+                    vertical_spacing=0.1,row_heights=rh)
 #Candlesticks
     fig.add_trace(go.Candlestick(x = df['Date'],
                                 open = df['Open'],
@@ -133,11 +141,10 @@ def chart_strategy(df):
 
     #fig.add_trace(go.Scatter(x = df.index, y = df['ma2'],name="60 Day SMA",line_color='purple'),row=1,col=1)
 
-    fig.add_trace(go.Scatter(x = df['Date'], y = df['bol_mid'],name="BOL MID",line_color='white'),row=1,col=1)
-
-    fig.add_trace(go.Scatter(x = df['Date'], y = df['bol_up'],name="BOL UP",line_color='green',fill='tonexty',fillcolor='rgba(110, 110, 110, 0.1)'),row=1,col=1)
-
-    fig.add_trace(go.Scatter(x = df['Date'], y = df['bol_down'],name="BOL Down",line_color='red',fill='tonexty',fillcolor='rgba(110, 110, 110, 0.1)'),row=1,col=1)
+    if bol_flag==1:
+        fig.add_trace(go.Scatter(x = df['Date'], y = df['bol_mid'],name="BOL MID",line_color='white'),row=1,col=1)
+        fig.add_trace(go.Scatter(x = df['Date'], y = df['bol_up'],name="BOL UP",line_color='green',fill='tonexty',fillcolor='rgba(110, 110, 110, 0.1)'),row=1,col=1)
+        fig.add_trace(go.Scatter(x = df['Date'], y = df['bol_down'],name="BOL Down",line_color='red',fill='tonexty',fillcolor='rgba(110, 110, 110, 0.1)'),row=1,col=1)
 
 
 #Volume
@@ -147,12 +154,15 @@ def chart_strategy(df):
     # elif flag==2:
     # 	fig.add_trace(go.Scatter(x = df['Date'], y = df['SMAvol'],name="Average",line_color='orange'),row=2,col=1)
 
-    fig.add_trace(go.Scatter(x = df['Date'], y = df['MACD'],name="MACD Line",line_color='green'),row=3,col=1)
-    fig.add_trace(go.Scatter(x = df['Date'], y = df['Signal'],name="MACD Signal",line_color='red'),row=3,col=1)
-    # fig.add_trace(go.Scatter(x = df.index, y = df['0'] ,name="Base",marker_color='white'),row=3,col=1)
-    fig.add_trace(go.Bar(x = df['Date'], y = df['MACDH'],name='MACD Histogram',marker_color=colour),row=3,col=1)
+    if macd_flag==1:
+        fig.add_trace(go.Scatter(x = df['Date'], y = df['MACD'],name="MACD Line",line_color='green'),row=3,col=1)
+        fig.add_trace(go.Scatter(x = df['Date'], y = df['Signal'],name="MACD Signal",line_color='red'),row=3,col=1)
+        fig.add_trace(go.Bar(x = df['Date'], y = df['MACDH'],name='MACD Histogram',marker_color=colour),row=3,col=1)
 
-    fig.add_trace(go.Scatter(x = df['Date'], y = df['rsi'],name="RSI",line_color='white'),row=4,col=1)
+    if rsi_flag==1 and macd_flag!=1:
+        fig.add_trace(go.Scatter(x = df['Date'], y = df['rsi'],name="RSI",line_color='white'),row=3,col=1)
+    elif rsi_flag==1 and macd_flag==1:
+        fig.add_trace(go.Scatter(x = df['Date'], y = df['rsi'],name="RSI",line_color='white'),row=4,col=1)
     fig.update_xaxes(
     rangebreaks=[
         dict(bounds=["sat", "sun"]), #hide weekends
@@ -168,13 +178,17 @@ def chart_strategy(df):
 
     return fig
 
-chart = chart_strategy(df)
+chart = chart_strategy(df,num_subplot)
 title = "Candlestick chart for " + symbol
 chart.update_layout(title=title)
 chart.update_layout(width=1100,height=900) 
 chart.layout.template = 'plotly_dark'
 
 st.write(chart)
+
+
+
+
 
 
 
